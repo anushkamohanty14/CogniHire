@@ -8,4 +8,11 @@ class UserProfileCreate(BaseModel):
 
 
 class UserProfileResponse(UserProfileCreate):
-    pass
+    phase1_job_suggestions: list[str] = Field(default_factory=list)
+
+
+class ResumeUploadResponse(BaseModel):
+    user_id: str
+    file_name: str
+    saved_path: str
+    size_bytes: int
