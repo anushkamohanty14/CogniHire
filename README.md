@@ -1,158 +1,228 @@
-# CogniHire — Cognitive Ability–Driven Interview Preparation Platform
+# CogniHire
+
+### AI-Powered Interview Preparation Platform with Cognitive Assessment
+
+---
 
 ## Overview
 
-CogniHire is a cognitive-first career intelligence system that combines:
+CogniHire is an AI-powered interview preparation platform designed to help students and job seekers:
 
-* **Cognitive ability assessment (NCPT-style tasks)**
-* **Resume-based skill extraction**
-* **O*NET-aligned job matching**
-* **AI-driven interview preparation**
+* understand their strengths and weaknesses
+* identify skill gaps for target roles
+* practice technical and behavioral interviews
+* receive structured, actionable feedback
 
-The system evaluates users using **scientifically grounded cognitive tasks**, converts performance into standardized ability scores, and uses these to drive **job recommendations, skill gap analysis, and interview generation**.
+The platform combines:
+
+* cognitive assessment (behavioral and working tendencies)
+* resume-based skill extraction
+* AI-generated interview questions
+* performance analysis and feedback
+
+The goal is to simulate real interview environments while providing personalized, data-driven preparation.
 
 ---
 
-## Core System Flow
+## Core Workflow
 
+```text
 User
-→ Cognitive Tasks (generated dynamically)
-→ Response + Reaction Time (RT) capture
-→ Raw + Composite Scoring
-→ Normalization (O*NET scale: 0–7)
-→ Ability Vector
-→ Skill Extraction (Resume)
-→ Hybrid Recommendation Engine
-→ Interview Generation + Feedback
-
----
-
-## Implemented Phases (Current State)
-
-### Phase 1 — O*NET Integration
-
-* Job ability matrices
-* Lexical job suggestion baseline
-
----
-
-### Phase 2 — User Profiling
-
-* Resume upload + parsing
-* Manual skill input
-* Profile normalization
-
----
-
-### Phase 3 — Cognitive Ability Engine
-
-* NCPT-style task framework
-* Ability-specific task mapping:
-
-  * Memory (digit span)
-  * Attention (Stroop)
-  * Speed (symbol search)
-  * Closure (pattern completion)
-  * Multitasking (dual-task)
-
----
-
-### Phase 4 — Preference Matching
-
-* Activity-based user preferences
-* Job activity similarity computation
-
----
-
-### Phase 5 — Reaction Time System
-
-* Trial-level timing capture
-* RT calculation (milliseconds)
-* Uses: `performance.now()` (frontend)
-
----
-
-### Phase 6 — Composite Scoring
-
-* Combines:
-
-  * Accuracy
-  * Reaction time
-* Task-specific scoring logic
-
----
-
-### Phase 7 — Ability Normalization
-
-* Z-score standardization
-* Scaling to O*NET-like range (0–7)
-
----
-
-## Cognitive System Design
-
-### Generation Strategy
-
-#### Rule-Based (Primary)
-
-Used for:
-
-* Memory
-* Attention
-* Perceptual speed
-* Time sharing
-* Speed of closure
-
-#### LLM-Based (Selective)
-
-Used for:
-
-* Mathematical reasoning
-* Problem sensitivity
-* Written comprehension
-
----
-
-### Why This Design
-
-* Ensures **measurement validity**
-* Enables **difficulty control**
-* Prevents memorization
-* Matches real cognitive testing systems
+│
+├── Cognitive Assessment (Quiz + Tasks)
+├── Resume Upload
+│
+↓
+User Profile & Capability Analysis
+│
+├── Strengths & Weaknesses
+├── Skill Gap Identification
+│
+↓
+Interview System
+├── Technical Questions (skill-based)
+└── Behavioral Questions (cognitive-based)
+│
+↓
+Practice + Feedback + Improvement
+```
 
 ---
 
 ## Key Features
 
-* Dynamic cognitive task generation (no static datasets)
-* Reaction-time–aware scoring
-* Ability vector construction
-* O*NET-aligned ability scaling
-* Hybrid recommendation system
-* Interview question generation (AI-powered)
+### Cognitive Assessment
+
+* Evaluates:
+
+  * attention
+  * memory
+  * problem-solving
+  * multitasking
+
+* Uses:
+
+  * NCPT-style cognitive tasks
+  * reaction-time–based evaluation
+  * structured scoring system
 
 ---
 
-## Project Structure
+### Resume Analysis
 
-For full architecture and module mapping:
+* Extracts:
 
-* `docs/cognitive_ability_requirements.md`
-* `PROJECT_STRUCTURE_PHASE2_ONWARDS.md`
+  * skills
+  * experience
+  * education
+
+* Builds a structured user skill profile
 
 ---
 
-## Running the API
+### User Profile Generation
 
-Follow the setup and execution instructions defined in the project structure and API configuration.
+Combines:
 
-Typical flow:
+* cognitive results
+* resume data
+
+Outputs:
+
+* strengths
+* weaknesses
+* capability profile
+
+---
+
+### Skill Gap Analysis
+
+* Compares user profile with job requirements
+
+* Identifies:
+
+  * missing skills
+  * readiness level
+
+* Suggests improvement areas
+
+---
+
+### Interview System
+
+* Generates:
+
+  * technical questions (based on skills and gaps)
+  * behavioral questions (based on cognitive profile)
+
+* Supports:
+
+  * text responses
+  * voice responses
+
+---
+
+### Feedback and Improvement
+
+Provides:
+
+* technical accuracy feedback
+* communication quality analysis
+* improvement suggestions
+
+---
+
+## Cognitive System
+
+### Measured Abilities
+
+* Mathematical Reasoning
+* Memorization
+* Perceptual Speed
+* Problem Sensitivity
+* Selective Attention
+* Speed of Closure
+* Time Sharing
+* Written Comprehension
+
+---
+
+### Task Design
+
+| Ability       | Task Type          |
+| ------------- | ------------------ |
+| Memory        | Digit span         |
+| Attention     | Stroop task        |
+| Speed         | Symbol search      |
+| Closure       | Pattern completion |
+| Multitasking  | Dual-task          |
+| Math          | Word problems      |
+| Comprehension | Reading passages   |
+
+---
+
+### Scoring Pipeline
+
+1. Response capture
+
+   * accuracy
+   * reaction time (RT)
+
+2. Composite scoring
+
+   * combines accuracy and speed
+
+3. Normalization
+
+   * z-score standardization
+   * scaled to 0–7 (O*NET-aligned)
+
+---
+
+### Generation Strategy
+
+**Rule-based (primary):**
+
+* memory
+* attention
+* perceptual speed
+* time sharing
+* closure
+
+**AI-based (selective):**
+
+* mathematical reasoning
+* problem sensitivity
+* written comprehension
+
+---
+
+## Project Phases (Current Implementation)
+
+* Phase 1: Cognitive task design and response capture (accuracy + reaction time)
+* Phase 2: Resume parsing and structured skill extraction
+* Phase 3: Composite scoring (accuracy and speed integration)
+* Phase 4: Ability normalization and mapping to O*NET scale (0–7)
+* Phase 5: User profile generation (cognitive + skill profile)
+* Phase 6: Skill gap analysis against target job roles
+* Phase 7: Interview question generation (technical + behavioral)
+
+---
+
+## Tech Stack
+
+* Frontend: React / Next.js / Streamlit
+* Backend: FastAPI (Python)
+* Database: PostgreSQL / MongoDB
+* AI/NLP: LLM APIs (Gemini / GPT)
+* Processing: NumPy, NLP libraries
+
+---
+
+## Running the Project
 
 ```bash
-# Install dependencies
 pip install -r requirements.txt
-
-# Run API
 uvicorn apps.api.src.main:app --reload
 ```
 
@@ -160,37 +230,44 @@ uvicorn apps.api.src.main:app --reload
 
 ## Design Principles
 
-* Cognitive-first architecture
-* Deterministic task generation
-* Separation of:
+* cognitive assessment supports interview preparation
+* deterministic task generation for reliability
+* minimal but effective use of AI
+* modular and scalable architecture
+* clear separation of:
 
-  * generation
-  * scoring
-  * normalization
-* Minimal but effective use of AI
+  * assessment
+  * profiling
+  * interview system
 
 ---
 
 ## Status
 
-The system currently supports:
+Currently implemented:
 
-* End-to-end cognitive scoring pipeline
-* Ability normalization
-* Integration with job ability datasets
+* cognitive scoring pipeline
+* reaction-time measurement
+* user profiling
+* resume parsing
 
-Next steps include:
+Upcoming:
 
-* Full recommendation pipeline integration
-* Interview simulation expansion
-* Explainability and visualization layers
-
----
-
-## References
-
-System design aligns with the full SRS:
-See `docs/` for detailed requirements and architecture documentation.
+* full interview simulation flow
+* advanced feedback system
+* visualization dashboards
 
 ---
 
+## Summary
+
+CogniHire is a cognitive-informed interview preparation platform that adapts to how users think, perform, and improve.
+
+---
+
+## Documentation
+
+* docs/cognitive_ability_requirements.md
+* PROJECT_STRUCTURE_PHASE2_ONWARDS.md
+
+---
