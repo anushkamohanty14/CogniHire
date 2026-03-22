@@ -1,10 +1,10 @@
 import streamlit as st
 
-from core.src.core.pipelines.phase1_onet_data import build_job_ability_matrix, clean_onet_data, load_onet_data
 from core.src.core.pipelines.phase2_user_input import (
     collect_interest_tags,
     collect_manual_skills,
     create_user_profile,
+    load_job_titles_from_onet,
     suggest_jobs_from_interest_tags,
     upload_resume,
 )
@@ -21,11 +21,10 @@ if st.button("Create profile"):
         manual_skills=collect_manual_skills(skills_raw),
         interest_tags=collect_interest_tags(tags_raw),
     )
-
-    rows = clean_onet_data(load_onet_data())
-    job_titles = list(build_job_ability_matrix(rows).keys())
-    profile["phase1_job_suggestions"] = suggest_jobs_from_interest_tags(profile["interest_tags"], job_titles)
-
+    profile["phase1_job_suggestions"] = suggest_jobs_from_interest_tags(
+        profile["interest_tags"],
+        load_job_titles_from_onet(),
+    )
     st.success("Profile payload created")
     st.json(profile)
 

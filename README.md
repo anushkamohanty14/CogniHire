@@ -1,9 +1,15 @@
-# CogniHire (Phase 1 + Phase 2 Integration)
+# CogniHire (Phase 1 + Phase 2+ Integration)
 
-This repository now contains a working integration of:
+This repository contains a working integration of:
 
-- **Phase 1:** O*NET job ability data loading/cleaning/matrix creation
+- **Phase 1:** O*NET job ability data loading, cleaning, and matrix creation
 - **Phase 2:** User profile registration, manual skills/tags collection, and resume upload
+- **Phase 3:** Cognitive scoring and ability similarity (scaffold)
+- **Phase 4:** Activity preference matching (scaffold)
+
+For the full architecture plan and phase-by-phase delivery contract, see:
+
+- `PROJECT_STRUCTURE_PHASE2_ONWARDS.md`
 
 ## What is integrated
 

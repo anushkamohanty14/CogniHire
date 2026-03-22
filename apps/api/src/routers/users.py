@@ -29,5 +29,5 @@ def get_profile(user_id: str) -> UserProfileResponse:
 @router.post("/resume", response_model=ResumeUploadResponse)
 async def upload_user_resume(user_id: str, file: UploadFile = File(...)) -> ResumeUploadResponse:
     content = await file.read()
-    metadata = upload_resume(file.filename, content, user_id)
+    metadata = upload_resume(file.filename or "resume.bin", content, user_id)
     return ResumeUploadResponse(**metadata)
