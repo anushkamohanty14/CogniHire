@@ -2,7 +2,8 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from ..schemas.users import ResumeUploadResponse, UserProfileCreate, UserProfileResponse
 from ..services.profile_service import ProfileService
-from core.src.core.pipelines.phase2_user_input import upload_resume
+from core.src.core.pipelines.phase2_user_input import merge_resume_skills, upload_resume
+from core.src.core.pipelines.phase5_resume_processing import process_resume
 
 router = APIRouter(prefix="/users", tags=["users"])
 service = ProfileService()
@@ -30,4 +31,12 @@ def get_profile(user_id: str) -> UserProfileResponse:
 async def upload_user_resume(user_id: str, file: UploadFile = File(...)) -> ResumeUploadResponse:
     content = await file.read()
     metadata = upload_resume(file.filename or "resume.bin", content, user_id)
+
+    result = process_resume(metadata["saved_path"])
+    metadata["extracted_skills"]  = result.skills
+    metadata["extraction_method"] = result.method
+
+    if result.skills:
+        merge_resume_skills(user_id, result.skills)
+
     return ResumeUploadResponse(**metadata)

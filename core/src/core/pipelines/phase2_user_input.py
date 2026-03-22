@@ -69,6 +69,25 @@ def upload_resume(file_name: str, content: bytes, user_id: str) -> Dict[str, Any
     }
 
 
+def merge_resume_skills(
+    user_id: str,
+    resume_skills: List[str],
+    storage_path: str = "data/interim/user_profiles.json",
+) -> None:
+    """Persist extracted resume skills into the user's stored profile.
+
+    Stores skills under the key ``"resume_skills"`` — kept separate from
+    ``"manual_skills"`` so the two sources remain distinguishable downstream.
+    Silently does nothing if no profile exists for *user_id*.
+    """
+    profile = get_user_profile(user_id, storage_path)
+    if profile is None:
+        return
+    normalised = sorted({s.strip().lower() for s in resume_skills if s.strip()})
+    profile["resume_skills"] = normalised
+    save_user_profile(profile, storage_path)
+
+
 def collect_manual_skills(raw_skills: str) -> List[str]:
     """Parse comma-separated skills from UI input."""
     return [item.strip() for item in raw_skills.split(",") if item.strip()]

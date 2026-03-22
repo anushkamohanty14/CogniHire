@@ -4,7 +4,6 @@ from core.src.core.pipelines.phase2_user_input import create_user_profile
 from core.src.core.pipelines.phase3_ability_matching import (
     build_user_ability_vector,
     compute_ability_similarity,
-    compute_cognitive_scores,
 )
 from core.src.core.pipelines.phase4_preference_matching import (
     compute_activity_similarity,
@@ -19,10 +18,9 @@ class PhasePipelineTests(unittest.TestCase):
         self.assertEqual(profile["manual_skills"], ["python", "sql"])
         self.assertEqual(profile["interest_tags"], ["data"])
 
-    def test_compute_cognitive_scores_min_max(self):
-        scores = compute_cognitive_scores({"a": 10, "b": 20})
-        self.assertEqual(scores["a"], 0.0)
-        self.assertEqual(scores["b"], 1.0)
+    def test_build_user_ability_vector_ordering(self):
+        vec = build_user_ability_vector({"x": 75, "y": 50}, ["x", "y", "z"])
+        self.assertEqual(vec, [75.0, 50.0, 0.0])
 
     def test_compute_ability_similarity_ranks(self):
         user = build_user_ability_vector({"x": 1, "y": 0}, ["x", "y"])
