@@ -11,6 +11,7 @@ from typing import Any, List
 import streamlit as st
 
 from core.src.core.scoring import ScoringEngine
+from core.src.core.storage.mongo_store import MongoUserStore
 from core.src.core.tasks import (
     DigitSpanGenerator,
     MathReasoningGenerator,
@@ -771,12 +772,24 @@ def _render_intro() -> None:
 
     _, mid, _ = st.columns([2, 3, 2])
     with mid:
+        uid_input = st.text_input(
+            "User ID",
+            value=st.session_state.get("user_id", ""),
+            placeholder="Enter the same ID used on the Profile page",
+            key="intro_uid",
+        )
+        if uid_input.strip():
+            st.session_state["user_id"] = uid_input.strip()
+
         if st.button("Begin Assessment", key="begin", type="primary", use_container_width=True):
-            st.session_state.task_queue  = _generate_battery()
-            st.session_state.current_idx = 0
-            st.session_state.responses   = []
-            st.session_state.ca_phase    = "testing"
-            st.rerun()
+            if not st.session_state.get("user_id", "").strip():
+                st.error("Enter a User ID before starting.")
+            else:
+                st.session_state.task_queue  = _generate_battery()
+                st.session_state.current_idx = 0
+                st.session_state.responses   = []
+                st.session_state.ca_phase    = "testing"
+                st.rerun()
 
     st.markdown(
         '<p style="text-align:center; font-size:10px; text-transform:uppercase;'
@@ -816,6 +829,12 @@ def _get_engine() -> ScoringEngine:
     return ScoringEngine()
 
 
+def _compute_readiness(percentiles: dict) -> float:
+    """Overall readiness score: simple mean of all ability percentiles (0–100)."""
+    vals = [v for v in percentiles.values() if v is not None]
+    return round(sum(vals) / len(vals), 1) if vals else 50.0
+
+
 def _render_complete() -> None:
     _topbar()
 
@@ -825,9 +844,46 @@ def _render_complete() -> None:
         profile = engine.score_session(user_id=user_id, responses=st.session_state.responses)
         st.session_state.ability_profile = profile
 
+        # Convert to Title Case keys (required by Phase 7 recommender)
+        percentiles_titled = {
+            ABILITY_LABELS[k]: v
+            for k, v in profile.ability_percentiles.items()
+            if k in ABILITY_LABELS
+        }
+        readiness = _compute_readiness(percentiles_titled)
+
+        # Save to MongoDB — merge with existing profile if present
+        try:
+            store = MongoUserStore()
+            existing = store.get_profile(user_id) or {"user_id": user_id}
+            existing["ability_percentiles"] = percentiles_titled
+            existing["readiness_score"]     = readiness
+            existing["assessed_at"]         = profile.assessed_at.isoformat()
+            store.upsert_profile(existing)
+            st.session_state["_mongo_save_ok"]       = True
+            st.session_state["_readiness_score"]     = readiness
+        except Exception as exc:
+            st.session_state["_mongo_save_ok"]   = False
+            st.session_state["_mongo_save_error"] = str(exc)
+
     profile = st.session_state.ability_profile
 
-    st.markdown("""
+    readiness = st.session_state.get("_readiness_score")
+
+    # ── Save status notification ──────────────────────────────────────────────
+    if st.session_state.get("_mongo_save_ok") is True:
+        pass  # silent success — shown via readiness panel below
+    elif st.session_state.get("_mongo_save_ok") is False:
+        st.warning(
+            f"Results could not be saved to your profile: "
+            f"{st.session_state.get('_mongo_save_error', 'unknown error')}. "
+            "Check your .env MONGODB_URI and try again."
+        )
+
+    # ── Heading + readiness ring ──────────────────────────────────────────────
+    readiness_pct  = readiness if readiness is not None else 50.0
+    readiness_text = f"{readiness_pct:.0f}"
+    st.markdown(f"""
     <div style="text-align:center; padding:2rem 0 2.5rem;">
         <span class="ca-overline" style="display:block; text-align:center;">Assessment Complete</span>
         <h1 style="font-size:2.25rem; font-weight:900; letter-spacing:-0.04em;
@@ -836,6 +892,24 @@ def _render_complete() -> None:
         </h1>
         <p style="font-size:0.9375rem; color:#40484e; font-family:Inter,sans-serif;">
             Scores are percentile ranks against a population of 9,000+ test-takers.
+        </p>
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:2.5rem;">
+        <div style="width:120px; height:120px; border-radius:50%;
+                    background:conic-gradient(#00425e {readiness_pct:.1f}%, #e1e2e6 0);
+                    display:flex; align-items:center; justify-content:center;">
+            <div style="width:90px; height:90px; border-radius:50%; background:#f8f9fc;
+                        display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                <span style="font-size:1.5rem; font-weight:900; color:#00425e;
+                             font-family:Inter,sans-serif; line-height:1;">{readiness_text}</span>
+                <span style="font-size:9px; font-weight:700; text-transform:uppercase;
+                             letter-spacing:0.1em; color:#40484e; line-height:1.5;">Readiness</span>
+            </div>
+        </div>
+        <p style="font-size:0.8125rem; color:#40484e; font-family:Inter,sans-serif;
+                  margin-top:0.75rem; text-align:center;">
+            Overall cognitive readiness vs. population<br>
+            <strong style="color:#191c1e;">{readiness_text}th percentile</strong>
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -874,7 +948,7 @@ def _render_complete() -> None:
     _, mid, _ = st.columns([2, 3, 2])
     with mid:
         if st.button("Continue to Job Matches →", key="to_jobs", type="primary", use_container_width=True):
-            st.switch_page("pages/04_recommendations.py")
+            st.switch_page("pages/04_results.py")
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
