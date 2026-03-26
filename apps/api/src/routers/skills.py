@@ -21,6 +21,7 @@ router = APIRouter(prefix="/api/skills", tags=["skills"])
 def get_skill_gaps(
     user_id: str,
     target_job: str = Query(..., description="Target job title"),
+    token: str = "",
 ) -> Dict[str, Any]:
     """Return strength/gap activities and tech skill gaps for a target job."""
     store = MongoUserStore()

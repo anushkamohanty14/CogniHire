@@ -38,7 +38,7 @@ function renderJobCards(recs) {
         <div style="margin-top:0.75rem;">
           <a href="/skills.html?job=${encodeURIComponent(job.job_title)}"
              style="font-size:12px;font-weight:600;color:#00425e;text-decoration:none;">
-            View Skill Gap →
+            View Skill Gap &rarr;
           </a>
         </div>
       </div>
@@ -47,11 +47,8 @@ function renderJobCards(recs) {
 }
 
 async function loadJobs() {
-  const input = document.getElementById('user-id-input');
-  const userId = (input ? input.value.trim() : '') || getUserId();
-  if (!userId) { alert('Please enter a User ID.'); return; }
-  setUserId(userId);
-  if (input) input.value = userId;
+  const userId = getUserId();
+  if (!userId) return;
 
   const grid = document.getElementById('jobs-grid');
   if (grid) grid.innerHTML = '<div style="padding:1rem;color:#40484e;">Loading job matches...</div>';
@@ -65,10 +62,7 @@ async function loadJobs() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const stored = getUserId();
-  if (stored) {
-    const input = document.getElementById('user-id-input');
-    if (input) input.value = stored;
-    loadJobs();
-  }
+  requireAuth();
+  populateNavUser();
+  loadJobs();
 });

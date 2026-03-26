@@ -194,7 +194,7 @@ function submitDualAnswer() {
 async function submitAllResponses() {
   const userId = getUserId();
   if (!userId) {
-    showCompletionState(null, 'No user ID set. Results not saved.');
+    showCompletionState(null, 'No user ID found. Please log in again.');
     return;
   }
 
@@ -256,14 +256,11 @@ function showCompletionState(result, message) {
 }
 
 async function loadAndStartAssessment() {
-  const input = document.getElementById('user-id-input');
-  const userId = (input ? input.value.trim() : '') || getUserId();
+  const userId = getUserId();
   if (!userId) {
-    alert('Please enter a User ID first.');
+    alert('No user ID found. Please log in again.');
     return;
   }
-  setUserId(userId);
-  if (input) input.value = userId;
 
   const grid = document.getElementById('tasks-grid');
   if (grid) grid.innerHTML = '<div style="text-align:center;padding:2rem;color:#40484e;">Loading tasks...</div>';
@@ -325,11 +322,3 @@ function renderTaskCards() {
     ${cards}
   `;
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  const stored = getUserId();
-  if (stored) {
-    const input = document.getElementById('user-id-input');
-    if (input) input.value = stored;
-  }
-});

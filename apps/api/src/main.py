@@ -11,6 +11,7 @@ from .routers.users import router as users_router
 from .routers.cognitive import router as cognitive_router
 from .routers.recommendations import router as rec_router
 from .routers.skills import router as skills_router
+from .routers.auth import router as auth_router
 
 app = FastAPI(title="CogniHire API", version="0.3.0")
 
@@ -21,6 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_router)
 app.include_router(users_router, prefix="/api")
 app.include_router(onet_router, prefix="/api")
 app.include_router(cognitive_router)
@@ -32,6 +34,6 @@ def health():
     return {"status": "ok"}
 
 # Serve static HTML frontend - MUST be last
-_static = Path(__file__).resolve().parents[3] / "web" / "static"
+_static = Path(__file__).resolve().parents[2] / "web" / "static"
 if _static.exists():
     app.mount("/", StaticFiles(directory=str(_static), html=True), name="static")

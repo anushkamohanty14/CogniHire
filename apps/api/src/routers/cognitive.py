@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[5]))
 from statistics import mean
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from core.src.core.scoring import ScoringEngine
@@ -74,7 +74,7 @@ def _task_to_dict(task: TaskItem) -> Dict[str, Any]:
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @router.get("/tasks")
-def get_tasks() -> List[Dict[str, Any]]:
+def get_tasks(token: str = "") -> List[Dict[str, Any]]:
     """Generate 2 tasks per ability = 18 total."""
     tasks: List[Dict[str, Any]] = []
     for gen in _GENERATORS:
@@ -84,7 +84,7 @@ def get_tasks() -> List[Dict[str, Any]]:
 
 
 @router.post("/assess")
-def assess(payload: AssessRequest) -> Dict[str, Any]:
+def assess(payload: AssessRequest, token: str = "") -> Dict[str, Any]:
     """Score user responses and persist to MongoDB."""
     if not payload.responses:
         raise HTTPException(status_code=400, detail="No responses provided")

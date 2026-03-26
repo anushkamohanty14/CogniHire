@@ -61,11 +61,8 @@ function renderSkillBars(abilityPercentiles) {
 }
 
 async function loadResumeProfile() {
-  const input = document.getElementById('user-id-input');
-  const userId = (input ? input.value.trim() : '') || getUserId();
+  const userId = getUserId();
   if (!userId) return;
-  setUserId(userId);
-  if (input) input.value = userId;
 
   try {
     const profile = await apiGet(`/users/profile/${userId}`);
@@ -82,12 +79,9 @@ async function loadResumeProfile() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const stored = getUserId();
-  if (stored) {
-    const input = document.getElementById('user-id-input');
-    if (input) input.value = stored;
-    loadResumeProfile();
-  }
+  requireAuth();
+  populateNavUser();
+  loadResumeProfile();
 
   // Wire up file input
   const zone = document.getElementById('upload-zone');

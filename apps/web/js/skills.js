@@ -1,15 +1,12 @@
 // CogniHire Skills JS
 
 async function loadSkillGaps() {
-  const input = document.getElementById('user-id-input');
   const selector = document.getElementById('job-selector');
-  const userId = (input ? input.value.trim() : '') || getUserId();
+  const userId = getUserId();
   const targetJob = selector ? selector.value : '';
 
-  if (!userId) { alert('Please enter a User ID.'); return; }
+  if (!userId) return;
   if (!targetJob) { alert('Please select a target job.'); return; }
-  setUserId(userId);
-  if (input) input.value = userId;
 
   try {
     const data = await apiGet(`/skills/gaps/${userId}?target_job=${encodeURIComponent(targetJob)}`);
@@ -72,19 +69,22 @@ async function populateJobSelector(userId) {
     }
   } catch (err) {
     console.warn('Could not load job selector:', err.message);
+    const selector = document.getElementById('job-selector');
+    if (selector) selector.innerHTML = '<option value="">— Complete assessment first —</option>';
   }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  requireAuth();
+  populateNavUser();
+
   // Pre-fill from URL param ?job=...
   const params = new URLSearchParams(window.location.search);
   const jobParam = params.get('job');
 
-  const stored = getUserId();
-  if (stored) {
-    const input = document.getElementById('user-id-input');
-    if (input) input.value = stored;
-    await populateJobSelector(stored);
+  const userId = getUserId();
+  if (userId) {
+    await populateJobSelector(userId);
     if (jobParam) {
       const selector = document.getElementById('job-selector');
       if (selector) {

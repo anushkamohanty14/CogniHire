@@ -63,17 +63,15 @@ function renderSkillBars(abilityPercentiles) {
 }
 
 async function loadDashboard() {
-  const input = document.getElementById('user-id-input');
-  const userId = (input ? input.value.trim() : '') || getUserId();
-  if (!userId) {
-    alert('Please enter a User ID.');
-    return;
-  }
-  setUserId(userId);
-  if (input) input.value = userId;
+  const userId = getUserId();
+  if (!userId) return;
 
-  const nameEl = document.getElementById('user-name');
-  if (nameEl) nameEl.textContent = userId;
+  // Update hero name and dash user name
+  const heroName = document.getElementById('hero-name');
+  const dashUserName = document.getElementById('dash-user-name');
+  const fullName = getFullName() || userId;
+  if (heroName) heroName.textContent = fullName;
+  if (dashUserName) dashUserName.textContent = fullName;
 
   try {
     const profile = await apiGet(`/users/profile/${userId}`);
@@ -123,16 +121,12 @@ async function loadDashboard() {
 
   } catch (err) {
     console.error('Dashboard load error:', err);
-    alert('Could not load profile: ' + err.message);
   }
 }
 
-// Auto-load on page start if user ID is stored
+// Auto-load on page start
 document.addEventListener('DOMContentLoaded', () => {
-  const stored = getUserId();
-  if (stored) {
-    const input = document.getElementById('user-id-input');
-    if (input) input.value = stored;
-    loadDashboard();
-  }
+  requireAuth();
+  populateNavUser();
+  loadDashboard();
 });
