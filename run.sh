@@ -1,20 +1,13 @@
 #!/usr/bin/env bash
-# CogniHire — local development launcher
-# Usage: ./run.sh
-
 set -euo pipefail
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# Verify .env exists
 if [ ! -f ".env" ]; then
-    echo "ERROR: .env not found. Copy .env.example and fill in your MongoDB credentials."
-    echo "  cp .env.example .env"
+    echo "ERROR: .env not found."
     exit 1
 fi
 
 echo "Starting CogniHire..."
-python3.12 -m streamlit run apps/web/app.py \
-    --server.headless false \
-    --browser.gatherUsageStats false
+echo "API + Frontend: http://localhost:8000"
+python -m uvicorn apps.api.src.main:app --reload --host 0.0.0.0 --port 8000
