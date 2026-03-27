@@ -31,8 +31,11 @@
     .card{background:#ffffff;border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:0.75rem;border:1px solid #eceef1;box-shadow:0 1px 3px rgba(0,0,0,0.04);}
     .section-label{font-family:Manrope,sans-serif;font-size:0.6875rem;text-transform:uppercase;letter-spacing:0.18em;font-weight:700;color:#40484e;margin:2rem 0 1rem;display:block;}
     .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;}
-    @media(max-width:900px){.grid-3{grid-template-columns:1fr;}.sidebar{display:none;}.main{margin-left:0;}}
-    select{background:#f2f4f7;border:1px solid #c0c7ce;border-radius:8px;padding:0.5rem 0.875rem;font-family:Inter,sans-serif;font-size:13px;color:#191c1e;outline:none;cursor:pointer;}
+    .industry-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
+    .industry-card{background:#ffffff;border-radius:16px;padding:1.5rem 1.25rem;border:1px solid #eceef1;box-shadow:0 1px 3px rgba(0,0,0,0.04);cursor:pointer;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;text-align:center;gap:0.5rem;}
+    .industry-card:hover{border-color:#00425e;box-shadow:0 4px 12px rgba(0,66,94,0.12);transform:translateY(-2px);}
+    @media(max-width:1100px){.industry-grid{grid-template-columns:repeat(3,1fr);}}
+    @media(max-width:800px){.industry-grid{grid-template-columns:repeat(2,1fr);}.grid-3{grid-template-columns:1fr;}.sidebar{display:none;}.main{margin-left:0;}}
   </style>
 </head>
 <body>
@@ -85,58 +88,38 @@
 
   <!-- Main Content -->
   <main class="main">
-    <!-- Header + Filters -->
+
+    <!-- Page header -->
     <div class="card" style="margin-bottom:1.5rem;">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
         <div>
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#40484e;margin-bottom:0.25rem;">Job Matching &amp; Career Insights</div>
-          <h1 style="font-family:Manrope,sans-serif;font-size:1.5rem;font-weight:800;color:#191c1e;">Your Career Matches</h1>
-          <p style="font-size:0.875rem;color:#40484e;margin-top:0.5rem;">Jobs ranked by your cognitive profile, work activities, and skills.</p>
+          <h1 style="font-family:Manrope,sans-serif;font-size:1.5rem;font-weight:800;color:#191c1e;" id="page-title">Choose an Industry</h1>
+          <p style="font-size:0.875rem;color:#40484e;margin-top:0.5rem;" id="page-subtitle">Select an industry to see your top matched roles within it.</p>
         </div>
-      </div>
-      <!-- Filters (visual UI) -->
-      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;padding-top:0.75rem;border-top:1px solid #eceef1;">
-        <div>
-          <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#40484e;display:block;margin-bottom:0.25rem;">Job Type</label>
-          <select>
-            <option>All Types</option>
-            <option>Full-time</option>
-            <option>Part-time</option>
-            <option>Contract</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#40484e;display:block;margin-bottom:0.25rem;">Industry</label>
-          <select>
-            <option>All Industries</option>
-            <option>Technology</option>
-            <option>Healthcare</option>
-            <option>Finance</option>
-            <option>Education</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#40484e;display:block;margin-bottom:0.25rem;">Salary Range</label>
-          <select>
-            <option>Any Salary</option>
-            <option>$50k&ndash;$80k</option>
-            <option>$80k&ndash;$120k</option>
-            <option>$120k+</option>
-          </select>
-        </div>
+        <!-- Back button (hidden until an industry is selected) -->
+        <button id="back-btn" onclick="showIndustryPicker()"
+          style="display:none;align-items:center;gap:0.5rem;background:#f2f4f7;border:1px solid #c0c7ce;border-radius:8px;padding:0.5rem 1rem;font-family:Manrope,sans-serif;font-size:13px;font-weight:600;color:#00425e;cursor:pointer;">
+          <span class="material-symbols-outlined" style="font-size:1rem;">arrow_back</span>
+          All Industries
+        </button>
       </div>
     </div>
 
-    <!-- Jobs Grid -->
-    <span class="section-label">Recommended Roles</span>
-    <div class="grid-3" id="jobs-grid">
-      <div class="card" style="grid-column:1/-1;text-align:center;padding:2.5rem;">
-        <span class="material-symbols-outlined" style="font-size:3rem;color:#c0c7ce;">work_outline</span>
-        <h2 style="font-family:Manrope,sans-serif;font-size:1.25rem;font-weight:700;color:#191c1e;margin:0.75rem 0 0.5rem;">No Matches Yet</h2>
-        <p style="font-size:0.9375rem;color:#40484e;">Complete the cognitive assessment to see job matches.</p>
-        <a href="/assessments.html" style="display:inline-block;margin-top:1rem;background:#00425e;color:#fff;padding:0.625rem 1.25rem;border-radius:8px;font-weight:600;font-size:13px;">Take Assessment</a>
+    <!-- Step 1: Industry picker -->
+    <div id="industry-section">
+      <span class="section-label">Industries</span>
+      <div class="industry-grid" id="industry-grid">
+        <div style="grid-column:1/-1;text-align:center;padding:2.5rem;color:#40484e;">Loading industries…</div>
       </div>
     </div>
+
+    <!-- Step 2: Job results -->
+    <div id="jobs-section" style="display:none;">
+      <span class="section-label" id="jobs-section-label">Recommended Roles</span>
+      <div class="grid-3" id="jobs-grid"></div>
+    </div>
+
   </main>
 
   <script src="/js/api.js"></script>

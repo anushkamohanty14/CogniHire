@@ -47,6 +47,11 @@ _ABILITIES = [
     "Written Comprehension",
 ]
 
+# Maps MongoDB snake_case keys → Title Case ability names
+_ABILITIES_SNAKE: Dict[str, str] = {
+    a.lower().replace(" ", "_"): a for a in _ABILITIES
+}
+
 DEFAULT_WEIGHTS: Dict[str, float] = {
     "ability": 0.4,
     "activity": 0.3,
@@ -69,6 +74,8 @@ class RecommendationResult:
     strength_activities: List[str] = field(default_factory=list)
     # Work activities where the user has the largest gap vs job requirement
     gap_activities: List[str] = field(default_factory=list)
+    # Per-ability comparison: user percentile vs O*NET job-requirement percentile
+    ability_breakdown: List[Dict] = field(default_factory=list)
 
 
 # ── Data loaders ─────────────────────────────────────────────────────────────
@@ -176,6 +183,7 @@ class HybridRecommender:
         weights: Optional[Dict[str, float]] = None,
         top_n: int = 10,
         top_k_activities: int = 3,
+        job_filter: Optional[List[str]] = None,
     ) -> List[RecommendationResult]:
         """Rank all jobs and return the top-N with explanations.
 
@@ -195,13 +203,24 @@ class HybridRecommender:
         """
         w = _normalise_weights(weights or DEFAULT_WEIGHTS)
 
+        # Restrict scoring to a subset of jobs if a filter is provided
+        if job_filter is not None:
+            valid = [j for j in job_filter if j in self.ja_pivot.index]
+            ja_pivot = self.ja_pivot.loc[valid]
+            wa_final = self.wa_final.reindex(valid).fillna(0)
+            tech_matrix = self.tech_matrix.reindex(valid).fillna(0)
+        else:
+            ja_pivot = self.ja_pivot
+            wa_final = self.wa_final
+            tech_matrix = self.tech_matrix
+
         user_z = self._percentiles_to_z(ability_percentiles)
-        ability_sims = self._ability_similarity(user_z)
-        activity_sims = self._activity_similarity(user_z)
-        skill_sims = compute_skill_similarity(user_skills, self.tech_matrix)
+        ability_sims = self._ability_similarity(user_z, ja_pivot)
+        activity_sims = self._activity_similarity(user_z, wa_final)
+        skill_sims = compute_skill_similarity(user_skills, tech_matrix)
 
         # Align all three series on the common job index
-        idx = self.ja_pivot.index
+        idx = ja_pivot.index
         ability_sims = ability_sims.reindex(idx).fillna(0)
         activity_sims = activity_sims.reindex(idx).fillna(0)
         skill_sims = skill_sims.reindex(idx).fillna(0)
@@ -214,9 +233,13 @@ class HybridRecommender:
 
         top_jobs = final.nlargest(top_n)
 
+        # Pre-build normalised percentiles (Title Case keys, 0–100)
+        norm_percentiles = _normalise_percentile_keys(ability_percentiles)
+
         results: List[RecommendationResult] = []
         for rank, (job_title, score) in enumerate(top_jobs.items(), start=1):
             strengths, gaps = self._explain(job_title, user_z, top_k_activities)
+            breakdown = self._ability_breakdown(norm_percentiles)
             results.append(RecommendationResult(
                 rank=rank,
                 job_title=job_title,
@@ -226,6 +249,7 @@ class HybridRecommender:
                 skill_score=round(float(skill_sims[job_title]), 4),
                 strength_activities=strengths,
                 gap_activities=gaps,
+                ability_breakdown=breakdown,
             ))
 
         return results
@@ -291,32 +315,43 @@ class HybridRecommender:
     # ── Internal helpers ──────────────────────────────────────────────────────
 
     def _percentiles_to_z(self, percentiles: Dict[str, float]) -> Dict[str, float]:
-        """Convert NCPT percentiles (0–100) → standard normal z-scores."""
+        """Convert NCPT percentiles (0–100) → standard normal z-scores.
+
+        Accepts keys in either Title Case or snake_case format.
+        """
+        normalised = _normalise_percentile_keys(percentiles)
         z: Dict[str, float] = {}
         for ability in _ABILITIES:
-            p = percentiles.get(ability, 50.0)
+            p = normalised.get(ability, 50.0)
             p_clipped = max(0.5, min(99.5, p))  # avoid ±inf at boundaries
             z[ability] = float(norm.ppf(p_clipped / 100.0))
         return z
 
-    def _ability_similarity(self, user_z: Dict[str, float]) -> pd.Series:
-        user_vec = np.array([user_z.get(a, 0.0) for a in self.ja_pivot.columns])
-        sims = cosine_similarity(user_vec.reshape(1, -1), self.ja_pivot.values)[0]
-        return pd.Series(sims, index=self.ja_pivot.index)
+    def _ability_breakdown(self, norm_percentiles: Dict[str, float]) -> List[Dict]:
+        """User's NCPT percentile per ability (0–100 from the assessment)."""
+        return [
+            {"ability": ability, "user_pct": round(norm_percentiles.get(ability, 50.0), 1)}
+            for ability in _ABILITIES
+        ]
 
-    def _activity_similarity(self, user_z: Dict[str, float]) -> pd.Series:
+    def _ability_similarity(self, user_z: Dict[str, float], ja_pivot: pd.DataFrame) -> pd.Series:
+        user_vec = np.array([user_z.get(a, 0.0) for a in ja_pivot.columns])
+        sims = cosine_similarity(user_vec.reshape(1, -1), ja_pivot.values)[0]
+        return pd.Series(sims, index=ja_pivot.index)
+
+    def _activity_similarity(self, user_z: Dict[str, float], wa_final: pd.DataFrame) -> pd.Series:
         atwa = self.atwa_matrix.reindex(_ABILITIES).fillna(0)
         user_vec = pd.Series(user_z).reindex(atwa.index).fillna(0)
         user_activity = atwa.T.dot(user_vec)
 
-        common_acts = user_activity.index.intersection(self.wa_final.columns)
+        common_acts = user_activity.index.intersection(wa_final.columns)
         if common_acts.empty:
-            return pd.Series(0.0, index=self.wa_final.index)
+            return pd.Series(0.0, index=wa_final.index)
 
         u = user_activity.loc[common_acts].values.reshape(1, -1)
-        J = self.wa_final[common_acts].values
+        J = wa_final[common_acts].values
         sims = cosine_similarity(u, J)[0]
-        return pd.Series(sims, index=self.wa_final.index)
+        return pd.Series(sims, index=wa_final.index)
 
     def _explain(
         self,
@@ -343,6 +378,20 @@ class HybridRecommender:
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _normalise_percentile_keys(percentiles: Dict[str, float]) -> Dict[str, float]:
+    """Return a copy of *percentiles* with all keys normalised to Title Case.
+
+    Supports both Title Case (``"Deductive Reasoning"``) and snake_case
+    (``"deductive_reasoning"``) input so that MongoDB-stored profiles and
+    in-memory profiles are both handled correctly.
+    """
+    result: Dict[str, float] = {}
+    for k, v in percentiles.items():
+        title_key = _ABILITIES_SNAKE.get(k, k)
+        result[title_key] = v
+    return result
+
 
 def _normalise_weights(weights: Dict[str, float]) -> Dict[str, float]:
     """Ensure ability/activity/skill weights sum to 1.0."""

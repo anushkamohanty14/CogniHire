@@ -12,6 +12,7 @@ from .routers.cognitive import router as cognitive_router
 from .routers.recommendations import router as rec_router
 from .routers.skills import router as skills_router
 from .routers.auth import router as auth_router
+from .routers.industries import router as industries_router
 
 app = FastAPI(title="CogniHire API", version="0.3.0")
 
@@ -23,6 +24,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(industries_router)
 app.include_router(users_router, prefix="/api")
 app.include_router(onet_router, prefix="/api")
 app.include_router(cognitive_router)
