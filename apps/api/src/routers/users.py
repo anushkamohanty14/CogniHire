@@ -1,35 +1,28 @@
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from ..schemas.users import ResumeUploadResponse, UserProfileCreate, UserProfileResponse
-from core.src.core.pipelines.phase2_user_input import (
-    create_user_profile,
-    get_user_profile,
-    load_job_titles_from_onet,
-    save_user_profile,
-    suggest_jobs_from_interest_tags,
-    upload_resume,
-)
+from ..services.profile_service import ProfileService
+from core.src.core.pipelines.phase2_user_input import merge_resume_skills, upload_resume
+from core.src.core.pipelines.phase5_resume_processing import process_resume
 
 router = APIRouter(prefix="/users", tags=["users"])
+service = ProfileService()
 
 
 @router.post("/profile", response_model=UserProfileResponse)
 def create_profile(payload: UserProfileCreate) -> UserProfileResponse:
-    normalized = create_user_profile(
+    normalized = service.create_profile(
         user_id=payload.user_id,
         manual_skills=payload.manual_skills,
         interest_tags=payload.interest_tags,
     )
-    suggestions = suggest_jobs_from_interest_tags(normalized["interest_tags"], load_job_titles_from_onet())
-    normalized["phase1_job_suggestions"] = suggestions
-    save_user_profile(normalized)
     return UserProfileResponse(**normalized)
 
 
 @router.get("/profile/{user_id}", response_model=UserProfileResponse)
-def read_profile(user_id: str) -> UserProfileResponse:
-    profile = get_user_profile(user_id)
-    if not profile:
+def get_profile(user_id: str) -> UserProfileResponse:
+    profile = service.get_profile(user_id)
+    if profile is None:
         raise HTTPException(status_code=404, detail="profile not found")
     return UserProfileResponse(**profile)
 
@@ -38,4 +31,12 @@ def read_profile(user_id: str) -> UserProfileResponse:
 async def upload_user_resume(user_id: str, file: UploadFile = File(...)) -> ResumeUploadResponse:
     content = await file.read()
     metadata = upload_resume(file.filename or "resume.bin", content, user_id)
+
+    result = process_resume(metadata["saved_path"])
+    metadata["extracted_skills"]  = result.skills
+    metadata["extraction_method"] = result.method
+
+    if result.skills:
+        merge_resume_skills(user_id, result.skills)
+
     return ResumeUploadResponse(**metadata)

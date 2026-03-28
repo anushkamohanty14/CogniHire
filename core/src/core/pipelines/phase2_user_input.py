@@ -11,7 +11,7 @@ def create_user_profile(
     interest_tags: List[str] | None = None,
 ) -> Dict[str, Any]:
     """Create a normalized user profile payload for persistence."""
-    if not user_id:
+    if not user_id or not user_id.strip():
         raise ValueError("user_id is required")
 
     cleaned_skills = sorted({s.strip().lower() for s in (manual_skills or []) if s and s.strip()})
@@ -44,8 +44,17 @@ def get_user_profile(user_id: str, storage_path: str = "data/interim/user_profil
     return existing.get(user_id)
 
 
+def sanitize_user_identifier(user_id: str) -> str:
+    """Allow only safe path-friendly user IDs."""
+    candidate = (user_id or "").strip()
+    if not candidate:
+        raise ValueError("user_id is required")
+    safe = re.sub(r"[^a-zA-Z0-9_-]", "_", candidate)
+    return safe[:80]
+
+
 def upload_resume(file_name: str, content: bytes, user_id: str) -> Dict[str, Any]:
-    """Save uploaded resume and return metadata."""
+    """Save uploaded resume to local storage and return metadata."""
     safe_user_id = sanitize_user_identifier(user_id)
     safe_name = Path(file_name).name
     output_dir = Path("data/interim/resumes") / safe_user_id
@@ -60,6 +69,25 @@ def upload_resume(file_name: str, content: bytes, user_id: str) -> Dict[str, Any
     }
 
 
+def merge_resume_skills(
+    user_id: str,
+    resume_skills: List[str],
+    storage_path: str = "data/interim/user_profiles.json",
+) -> None:
+    """Persist extracted resume skills into the user's stored profile.
+
+    Stores skills under the key ``"resume_skills"`` — kept separate from
+    ``"manual_skills"`` so the two sources remain distinguishable downstream.
+    Silently does nothing if no profile exists for *user_id*.
+    """
+    profile = get_user_profile(user_id, storage_path)
+    if profile is None:
+        return
+    normalised = sorted({s.strip().lower() for s in resume_skills if s.strip()})
+    profile["resume_skills"] = normalised
+    save_user_profile(profile, storage_path)
+
+
 def collect_manual_skills(raw_skills: str) -> List[str]:
     """Parse comma-separated skills from UI input."""
     return [item.strip() for item in raw_skills.split(",") if item.strip()]
@@ -68,15 +96,6 @@ def collect_manual_skills(raw_skills: str) -> List[str]:
 def collect_interest_tags(raw_tags: str) -> List[str]:
     """Parse comma-separated career-interest tags from UI input."""
     return [item.strip() for item in raw_tags.split(",") if item.strip()]
-
-
-def sanitize_user_identifier(user_id: str) -> str:
-    """Allow only safe path-friendly user IDs."""
-    candidate = (user_id or "").strip()
-    if not candidate:
-        raise ValueError("user_id is required")
-    safe = re.sub(r"[^a-zA-Z0-9_-]", "_", candidate)
-    return safe[:80]
 
 
 def load_job_titles_from_onet(csv_path: str = "job_abilities_onet.csv") -> List[str]:

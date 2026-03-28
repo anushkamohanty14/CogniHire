@@ -16,3 +16,5 @@ class ResumeUploadResponse(BaseModel):
     file_name: str
     saved_path: str
     size_bytes: int
+    extracted_skills: list[str] = Field(default_factory=list)
+    extraction_method: str = "none"   # "llm" | "rules" | "error" | "none"
