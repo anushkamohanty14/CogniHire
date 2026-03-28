@@ -19,7 +19,7 @@ from core.src.core.industry_clusters import (
 
 router = APIRouter(prefix="/api/industries", tags=["industries"])
 
-_MATRIX = Path(__file__).resolve().parents[5] / "Archive" / "job_abilities_matrix.csv"
+_MATRIX = Path(__file__).resolve().parents[4] / "Archive" / "job_abilities_matrix.csv"
 
 
 def _job_counts() -> Dict[str, int]:
