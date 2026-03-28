@@ -1,4 +1,4 @@
-# CogniHire (Phase 1 + Phase 2+ Integration)
+# CogniHire
 
 This repository contains a working integration of:
 
@@ -31,6 +31,7 @@ This installs all required packages from `requirements.txt`.
 ## Run API
 
 ```bash
+pip install -r requirements.txt
 uvicorn apps.api.src.main:app --reload
 ```
 
